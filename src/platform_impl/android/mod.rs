@@ -23,6 +23,7 @@ use crate::{
     error,
     event::{self, Force, InnerSizeWriter, StartCause},
     event_loop::{self, ControlFlow, DeviceEvents, EventLoopWindowTarget as RootELW},
+    keyboard::Key,
     platform::pump_events::PumpStatus,
     window::{
         self, CursorGrabMode, ImePurpose, ResizeDirection, Theme, WindowButtons, WindowLevel,
@@ -282,7 +283,10 @@ impl<T: 'static> EventLoop<T> {
                     self.running = true;
                     show_hide_keyboard(
                         self.window_target.p.app.clone(),
-                        self.window_target.p.show_keyboard_on_resume.load(Ordering::SeqCst),
+                        self.window_target
+                            .p
+                            .show_keyboard_on_resume
+                            .load(Ordering::SeqCst),
                     );
                 }
                 MainEvent::SaveState { .. } => {
@@ -456,6 +460,13 @@ impl<T: 'static> EventLoop<T> {
                             &mut self.combining_accent,
                         );
 
+                        let logical_key= keycodes::to_logical(key_char, keycode);
+                        let text = if let Key::Character(ref c) = logical_key {
+                            Some(c.to_owned())
+                        } else {
+                            None
+                        };
+
                         let event = event::Event::WindowEvent {
                             window_id: window::WindowId(WindowId),
                             event: event::WindowEvent::KeyboardInput {
@@ -463,10 +474,10 @@ impl<T: 'static> EventLoop<T> {
                                 event: event::KeyEvent {
                                     state,
                                     physical_key: keycodes::to_physical_key(keycode),
-                                    logical_key: keycodes::to_logical(key_char, keycode),
+                                    logical_key,
                                     location: keycodes::to_location(keycode),
                                     repeat: key.repeat_count() > 0,
-                                    text: None,
+                                    text,
                                     platform_specific: KeyEventExtra {},
                                 },
                                 is_synthetic: false,
@@ -769,13 +780,28 @@ fn show_hide_keyboard_fallible(app: AndroidApp, show: bool) -> Result<(), jni::e
     let vm = unsafe { JavaVM::from_raw(app.vm_as_ptr() as _)? };
     let activity = unsafe { JObject::from_raw(app.activity_as_ptr() as _) };
     let mut env = vm.attach_current_thread()?;
-    let window = env.call_method(&activity, "getWindow", "()Landroid/view/Window;", &[])?.l()?;
+    let window = env
+        .call_method(&activity, "getWindow", "()Landroid/view/Window;", &[])?
+        .l()?;
     let wic = env
-        .call_method(window, "getInsetsController", "()Landroid/view/WindowInsetsController;", &[])?
+        .call_method(
+            window,
+            "getInsetsController",
+            "()Landroid/view/WindowInsetsController;",
+            &[],
+        )?
         .l()?;
     let window_insets_types = env.find_class("android/view/WindowInsets$Type")?;
-    let ime_type = env.call_static_method(&window_insets_types, "ime", "()I", &[])?.i()?;
-    env.call_method(&wic, if show { "show" } else { "hide" }, "(I)V", &[ime_type.into()])?.v()
+    let ime_type = env
+        .call_static_method(&window_insets_types, "ime", "()I", &[])?
+        .i()?;
+    env.call_method(
+        &wic,
+        if show { "show" } else { "hide" },
+        "(I)V",
+        &[ime_type.into()],
+    )?
+    .v()
 }
 
 fn show_hide_keyboard(app: AndroidApp, show: bool) {
@@ -932,7 +958,8 @@ impl Window {
     pub fn set_ime_cursor_area(&self, _position: Position, _size: Size) {}
 
     pub fn set_ime_allowed(&self, allowed: bool) {
-        self.show_keyboard_on_resume.store(allowed, Ordering::SeqCst);
+        self.show_keyboard_on_resume
+            .store(allowed, Ordering::SeqCst);
         show_hide_keyboard(self.app.clone(), allowed);
     }
 
