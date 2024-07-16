@@ -10,7 +10,6 @@ android_logger = "0.14"
 jni = "*"
 eframe = { version = "0.28", features = ["wgpu", "android-game-activity"] }
 egui = { version = "0.28" }
-#egui-winit.workspace = true
 ndk-context = "*"
 thiserror = "1.0.40"
 winit = "0.29.15"
@@ -19,5 +18,5 @@ winit = "0.29.15"
 name = "main"
 crate_type = ["cdylib"]
 
-#[patch.crates-io]
-#winit = {path = "../.."}
+[patch.crates-io]
+winit = { path = "../.." }

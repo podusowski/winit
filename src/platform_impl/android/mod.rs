@@ -805,6 +805,7 @@ fn show_hide_keyboard_fallible(app: AndroidApp, show: bool) -> Result<(), jni::e
 }
 
 fn show_hide_keyboard(app: AndroidApp, show: bool) {
+    log::info!("Show/hide keyboard. Show: {}", show);
     if let Err(e) = show_hide_keyboard_fallible(app, show) {
         log::error!("Showing or hiding the soft keyboard failed: {e:?}");
     };

@@ -224,5 +224,7 @@ web-sys = { version = "0.3.22", features = ['CanvasRenderingContext2d'] }
 [workspace]
 members = [
     "run-wasm",
+]
+exclude = [
     "demo_android/rust"
 ]

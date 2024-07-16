@@ -5,13 +5,7 @@ struct MyApp {
 
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let rimless = egui::Frame {
-            fill: ctx.style().visuals.panel_fill,
-            ..Default::default()
-        };
-
         egui::CentralPanel::default()
-            .frame(rimless)
             .show(ctx, |ui| {
                 ui.text_edit_multiline(&mut self.text);
             });
