@@ -1,0 +1,23 @@
+[package]
+name = "demo_android"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+log = "0.4"
+android_logger = "0.14"
+jni = "*"
+eframe = { version = "0.28", features = ["wgpu", "android-game-activity"] }
+egui = { version = "0.28" }
+#egui-winit.workspace = true
+ndk-context = "*"
+thiserror = "1.0.40"
+winit = "0.29.15"
+
+[lib]
+name = "main"
+crate_type = ["cdylib"]
+
+#[patch.crates-io]
+#winit = {path = "../.."}
